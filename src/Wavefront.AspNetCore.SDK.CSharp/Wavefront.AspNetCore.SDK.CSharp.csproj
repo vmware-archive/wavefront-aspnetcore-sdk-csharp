@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackOnBuild>true</PackOnBuild>
+    <PackageVersion>0.1.0</PackageVersion>
+    <Authors>Wavefront</Authors>
+    <Description>This library provides support for reporting out of the box metrics and histograms from your ASP.NET Core Web Api or MVC application. The data is reported to Wavefront via proxy or direct ingestion and will help you understand how your application is performing in production.</Description>
+    <PackageId>Wavefront.AspNetCore.SDK.CSharp</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.1.3" />
+    <PackageReference Include="App.Metrics.AspNetCore" Version="2.0.0" />
+    <PackageReference Include="NuGet.Build.Packaging" Version="0.2.2" />
+    <PackageReference Include="Wavefront.AppMetrics.CSharp.SDK" Version="0.3.1-alpha" />
+  </ItemGroup>
+</Project>
