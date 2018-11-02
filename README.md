@@ -6,7 +6,7 @@ This SDK collects out of the box metrics and histograms from your ASP.NET Core a
   * .NET Standard (>= 2.0)
   * App.Metrics.AspNetCore (>= 2.0.0)
   * Microsoft.AspNetCore.Mvc (>= 2.1.0)
-  * Wavefront.AppMetrics.SDK.CSharp (>= 2.0.0) [Github repo](https://github.com/wavefrontHQ/wavefront-appmetrics-sdk-csharp/tree/han/refactoring-and-aspnetcore-updates)
+  * Wavefront.AppMetrics.SDK.CSharp (>= 2.0.0) ([Github repo](https://github.com/wavefrontHQ/wavefront-appmetrics-sdk-csharp/tree/han/refactoring-and-aspnetcore-updates))
   
 ## Configuration
 In order to collect HTTP request/response metrics and histograms for your application, you will need to register the Wavefront services that the SDK provides on application startup. This is done in the [`ConfigureServices` method](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-2.1#the-configureservices-method) of the `Startup` class.
@@ -18,10 +18,7 @@ The steps to do so are as follows:
 4. Register Wavefront services in `Startup`. For your ASP.NET Core MVC application, this is done by adding a call to `services.AddWavefrontForMvc` in `ConfigureServices`
 
 The sections below detail each of the above steps.
-  
-## Application Startup
-The gathering and reporting of Wavefront metrics is implemented as services that are configured on application startup. The instructions below will show you how to configure the services in the `ConfigureServices` method of the `Startup` class.
-  
+
 ### 1. Application Tags
 The application tags determine the metadata (aka point tags) that are included with the metrics and histograms reported to Wavefront.
 
@@ -92,7 +89,7 @@ var wfAspNetCoreReporter = builder.Build(wavefrontSender);
 Replace the source `mySource` with a relevant source name.
 
 ### 4. Register Wavefront services
-For your ASP.NET Core MVC application, add a call to `services.AddWavefrontForMvc` in `ConfigureServices` to enable HTTP request/response metrics and histograms for your controller actions:
+For your ASP.NET Core MVC application, add a call to `services.AddWavefrontForMvc` in `ConfigureServices` to enable HTTP request/response metrics and histograms for your controller actions. (This is implemented using an `IResourceFilter`, see the [ASP.NET Core Filters documentation](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/filters?view=aspnetcore-2.1#resource-filters) to learn how they work.)
 
 ```csharp
 public class Startup
