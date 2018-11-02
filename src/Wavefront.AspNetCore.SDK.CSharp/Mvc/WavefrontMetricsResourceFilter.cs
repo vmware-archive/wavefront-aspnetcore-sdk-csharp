@@ -5,20 +5,27 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using App.Metrics;
 using App.Metrics.Counter;
+using App.Metrics.Gauge;
 using App.Metrics.Histogram;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Wavefront.AspNetCore.SDK.CSharp.Common;
+using Wavefront.SDK.CSharp.Common.Application;
+using static Wavefront.AspNetCore.SDK.CSharp.Common.Constants;
+using static Wavefront.SDK.CSharp.Common.Constants;
 
-namespace Wavefront.AspNetCore.SDK.CSharp
+namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
 {
+    /// <summary>
+    ///     An <see cref="IResourceFilter"/> that generates Wavefront metrics and histograms for
+    ///     ASP.NET Core MVC requests/responses.
+    /// </summary>
     public class WavefrontMetricsResourceFilter : IResourceFilter
     {
         private readonly ILogger<WavefrontMetricsResourceFilter> logger;
         private readonly IMetrics metrics;
         private readonly ApplicationTags applicationTags;
-        private readonly string source;
 
         private readonly MetricTags overallAggregatedPerSourceTags;
         private readonly MetricTags overallAggregatedPerShardTags;
@@ -33,28 +40,25 @@ namespace Wavefront.AspNetCore.SDK.CSharp
 
         public WavefrontMetricsResourceFilter(
             ILogger<WavefrontMetricsResourceFilter> logger,
-            IMetrics metrics,
-            ApplicationTags applicationTags,
-            IOptions<WavefrontReportingOptions> wavefrontReportingOptions)
+            WavefrontAspNetCoreReporter wfAspNetCoreReporter)
         {
             this.logger = logger;
-            this.metrics = metrics;
-            this.applicationTags = applicationTags;
-            source = wavefrontReportingOptions.Value.Source;
+            metrics = wfAspNetCoreReporter.Metrics;
+            applicationTags = wfAspNetCoreReporter.ApplicationTags;
 
             overallAggregatedPerSourceTags = GetTags(true, true, true, null, null, null);
             overallAggregatedPerShardTags =
-                GetTags(true, true, true, null, null, Constants.WavefrontProvidedSource);
+                GetTags(true, true, true, null, null, WavefrontProvidedSource);
             overallAggregatedPerServiceTags =
-                GetTags(true, true, false, null, null, Constants.WavefrontProvidedSource);
+                GetTags(true, true, false, null, null, WavefrontProvidedSource);
             overallAggregatedPerClusterTags =
-                GetTags(true, false, false, null, null, Constants.WavefrontProvidedSource);
+                GetTags(true, false, false, null, null, WavefrontProvidedSource);
             overallAggregatedPerApplicationTags =
-                GetTags(false, false, false, null, null, Constants.WavefrontProvidedSource);
+                GetTags(false, false, false, null, null, WavefrontProvidedSource);
 
             totalInflightRequestGauge = new WavefrontGaugeOptions()
             {
-                Context = Constants.AspNetCoreContext,
+                Context = AspNetCoreContext,
                 Name = "total_requests.inflight",
                 Tags = overallAggregatedPerSourceTags,
                 MeasurementUnit = Unit.Requests
@@ -81,7 +85,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp
              */
             var inflightRequestGauge = new WavefrontGaugeOptions()
             {
-                Context = Constants.AspNetCoreContext,
+                Context = AspNetCoreContext,
                 Name = requestMetricKey + ".inflight",
                 Tags = completeTags,
                 MeasurementUnit = Unit.Requests
@@ -110,7 +114,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp
              */
             var inflightRequestGauge = new WavefrontGaugeOptions()
             {
-                Context = Constants.AspNetCoreContext,
+                Context = AspNetCoreContext,
                 Name = requestMetricKey + ".inflight",
                 Tags = completeTags,
                 MeasurementUnit = Unit.Requests
@@ -118,14 +122,14 @@ namespace Wavefront.AspNetCore.SDK.CSharp
             Interlocked.Decrement(ref gauges[inflightRequestGauge].Value);
             Interlocked.Decrement(ref gauges[totalInflightRequestGauge].Value);
 
-            var aggregatedPerShardTags = GetTags(true, true, true, controllerName, actionName,
-                                                 Constants.WavefrontProvidedSource);
-            var aggregatedPerServiceTags = GetTags(true, true, false, controllerName, actionName,
-                                                   Constants.WavefrontProvidedSource);
-            var aggregatedPerClusterTags = GetTags(true, false, false, controllerName, actionName,
-                                                   Constants.WavefrontProvidedSource);
-            var aggregatedPerApplicationTags = GetTags(false, false, false, controllerName, actionName,
-                                                   Constants.WavefrontProvidedSource);
+            var aggregatedPerShardTags =
+                GetTags(true, true, true, controllerName, actionName, WavefrontProvidedSource);
+            var aggregatedPerServiceTags =
+                GetTags(true, true, false, controllerName, actionName, WavefrontProvidedSource);
+            var aggregatedPerClusterTags =
+                GetTags(true, false, false, controllerName, actionName, WavefrontProvidedSource);
+            var aggregatedPerApplicationTags =
+                GetTags(false, false, false, controllerName, actionName, WavefrontProvidedSource);
 
             /*
              * Granular response metrics
@@ -137,40 +141,40 @@ namespace Wavefront.AspNetCore.SDK.CSharp
              */
             metrics.Measure.Counter.Increment(new CounterOptions()
             {
-                Context = Constants.AspNetCoreContext,
+                Context = AspNetCoreContext,
                 Name = responseMetricKey + ".cumulative",
                 Tags = completeTags,
-                MeasurementUnit = Constants.ResponseUnit
+                MeasurementUnit = ResponseUnit
             });
             if (applicationTags.Shard != null)
             {
                 metrics.Measure.Counter.Increment(
                     new DeltaCounterOptions.Builder(responseMetricKey + ".aggregated_per_shard")
-                                           .Context(Constants.AspNetCoreContext)
+                                           .Context(AspNetCoreContext)
                                            .Tags(aggregatedPerShardTags)
-                                           .MeasurementUnit(Constants.ResponseUnit)
+                                           .MeasurementUnit(ResponseUnit)
                                            .Build());
             }
             metrics.Measure.Counter.Increment(
                 new DeltaCounterOptions.Builder(responseMetricKey + ".aggregated_per_service")
-                                       .Context(Constants.AspNetCoreContext)
+                                       .Context(AspNetCoreContext)
                                        .Tags(aggregatedPerServiceTags)
-                                       .MeasurementUnit(Constants.ResponseUnit)
+                                       .MeasurementUnit(ResponseUnit)
                                        .Build());
             if (applicationTags.Cluster != null)
             {
                 metrics.Measure.Counter.Increment(
                     new DeltaCounterOptions.Builder(responseMetricKey + ".aggregated_per_cluster")
-                                           .Context(Constants.AspNetCoreContext)
+                                           .Context(AspNetCoreContext)
                                            .Tags(aggregatedPerClusterTags)
-                                           .MeasurementUnit(Constants.ResponseUnit)
+                                           .MeasurementUnit(ResponseUnit)
                                            .Build());
             }
             metrics.Measure.Counter.Increment(
                 new DeltaCounterOptions.Builder(responseMetricKey + ".aggregated_per_application")
-                                       .Context(Constants.AspNetCoreContext)
+                                       .Context(AspNetCoreContext)
                                        .Tags(aggregatedPerApplicationTags)
-                                       .MeasurementUnit(Constants.ResponseUnit)
+                                       .MeasurementUnit(ResponseUnit)
                                        .Build());
 
             /*
@@ -185,14 +189,14 @@ namespace Wavefront.AspNetCore.SDK.CSharp
             {
                 metrics.Measure.Counter.Increment(new CounterOptions()
                 {
-                    Context = Constants.AspNetCoreContext,
+                    Context = AspNetCoreContext,
                     Name = "response.errors",
                     Tags = completeTags,
                     MeasurementUnit = Unit.Errors
                 });
                 metrics.Measure.Counter.Increment(new CounterOptions()
                 {
-                    Context = Constants.AspNetCoreContext,
+                    Context = AspNetCoreContext,
                     Name = "response.errors.aggregated_per_source",
                     Tags = overallAggregatedPerSourceTags,
                     MeasurementUnit = Unit.Errors
@@ -201,14 +205,14 @@ namespace Wavefront.AspNetCore.SDK.CSharp
                 {
                     metrics.Measure.Counter.Increment(
                         new DeltaCounterOptions.Builder("response.errors.aggregated_per_shard")
-                                               .Context(Constants.AspNetCoreContext)
+                                               .Context(AspNetCoreContext)
                                                .Tags(overallAggregatedPerShardTags)
                                                .MeasurementUnit(Unit.Errors)
                                                .Build());
                 }
                 metrics.Measure.Counter.Increment(
                     new DeltaCounterOptions.Builder("response.errors.aggregated_per_service")
-                                           .Context(Constants.AspNetCoreContext)
+                                           .Context(AspNetCoreContext)
                                            .Tags(overallAggregatedPerServiceTags)
                                            .MeasurementUnit(Unit.Errors)
                                            .Build());
@@ -216,14 +220,14 @@ namespace Wavefront.AspNetCore.SDK.CSharp
                 {
                     metrics.Measure.Counter.Increment(
                         new DeltaCounterOptions.Builder("response.errors.aggregated_per_cluster")
-                                               .Context(Constants.AspNetCoreContext)
+                                               .Context(AspNetCoreContext)
                                                .Tags(overallAggregatedPerClusterTags)
                                                .MeasurementUnit(Unit.Errors)
                                                .Build());
                 }
                 metrics.Measure.Counter.Increment(
                     new DeltaCounterOptions.Builder("response.errors.aggregated_per_application")
-                                           .Context(Constants.AspNetCoreContext)
+                                           .Context(AspNetCoreContext)
                                            .Tags(overallAggregatedPerApplicationTags)
                                            .MeasurementUnit(Unit.Errors)
                                            .Build());
@@ -239,40 +243,40 @@ namespace Wavefront.AspNetCore.SDK.CSharp
              */
             metrics.Measure.Counter.Increment(new CounterOptions()
             {
-                Context = Constants.AspNetCoreContext,
+                Context = AspNetCoreContext,
                 Name = "response.completed.aggregated_per_source",
                 Tags = overallAggregatedPerSourceTags,
-                MeasurementUnit = Constants.ResponseUnit
+                MeasurementUnit = ResponseUnit
             });
             if (applicationTags.Shard != null)
             {
                 metrics.Measure.Counter.Increment(
                     new DeltaCounterOptions.Builder("response.completed.aggregated_per_shard")
-                                           .Context(Constants.AspNetCoreContext)
+                                           .Context(AspNetCoreContext)
                                            .Tags(overallAggregatedPerShardTags)
-                                           .MeasurementUnit(Constants.ResponseUnit)
+                                           .MeasurementUnit(ResponseUnit)
                                            .Build());
             }
             metrics.Measure.Counter.Increment(
                 new DeltaCounterOptions.Builder("response.completed.aggregated_per_service")
-                                       .Context(Constants.AspNetCoreContext)
+                                       .Context(AspNetCoreContext)
                                        .Tags(overallAggregatedPerServiceTags)
-                                       .MeasurementUnit(Constants.ResponseUnit)
+                                       .MeasurementUnit(ResponseUnit)
                                        .Build());
             if (applicationTags.Cluster != null)
             {
                 metrics.Measure.Counter.Increment(
                     new DeltaCounterOptions.Builder("response.completed.aggregated_per_cluster")
-                                           .Context(Constants.AspNetCoreContext)
+                                           .Context(AspNetCoreContext)
                                            .Tags(overallAggregatedPerClusterTags)
-                                           .MeasurementUnit(Constants.ResponseUnit)
+                                           .MeasurementUnit(ResponseUnit)
                                            .Build());
             }
             metrics.Measure.Counter.Increment(
                 new DeltaCounterOptions.Builder("response.completed.aggregated_per_application")
-                                       .Context(Constants.AspNetCoreContext)
+                                       .Context(AspNetCoreContext)
                                        .Tags(overallAggregatedPerApplicationTags)
-                                       .MeasurementUnit(Constants.ResponseUnit)
+                                       .MeasurementUnit(ResponseUnit)
                                        .Build());
 
             /*
@@ -283,17 +287,17 @@ namespace Wavefront.AspNetCore.SDK.CSharp
                 GetCurrentMillis() - (long)context.HttpContext.Items["startTimeMillis"];
             metrics.Measure.Histogram.Update(
                 new WavefrontHistogramOptions.Builder(responseMetricKey + ".latency")
-                                       .Context(Constants.AspNetCoreContext)
+                                       .Context(AspNetCoreContext)
                                        .Tags(completeTags)
-                                       .MeasurementUnit(Constants.MillisecondUnit)
+                                       .MeasurementUnit(MillisecondUnit)
                                        .Build(), apiLatency);
 /*
             long cpuNanos = GetCurrentNanos() - (long)context.HttpContext.Items["startTimeNanos"];
             metrics.Measure.Histogram.Update(
                 new WavefrontHistogramOptions.Builder(responseMetricKey + ".cpu_ns")
-                                       .Context(Constants.AspNetCoreContext)
+                                       .Context(AspNetCoreContext)
                                        .Tags(completeTags)
-                                       .MeasurementUnit(Constants.NanosecondUnit)
+                                       .MeasurementUnit(NanosecondUnit)
                                        .Build(), cpuNanos);
 */
         }
@@ -312,33 +316,32 @@ namespace Wavefront.AspNetCore.SDK.CSharp
             bool includeCluster, bool includeService, bool includeShard, 
             string controllerName, string actionName, string source)
         {
-            var tagsDictionary = new Dictionary<string, string>(applicationTags.CustomTags)
-            {
-                { Constants.ApplicationTagKey, applicationTags.Application }
-            };
+            var tagsDictionary = new Dictionary<string, string>();
+
             if (includeCluster)
             {
-                tagsDictionary.Add(
-                    Constants.ClusterTagKey, applicationTags.Cluster ?? Constants.NullTagValue);
+                tagsDictionary.Add(ClusterTagKey, applicationTags.Cluster ?? NullTagValue);
             }
             if (includeService)
             {
-                tagsDictionary.Add(Constants.ServiceTagKey, applicationTags.Service);
+                tagsDictionary.Add(ServiceTagKey, applicationTags.Service);
             }
             if (includeShard)
             {
-                tagsDictionary.Add(
-                    Constants.ShardTagKey, applicationTags.Shard ?? Constants.NullTagValue);
+                tagsDictionary.Add(ShardTagKey, applicationTags.Shard ?? NullTagValue);
             }
             if (controllerName != null)
             {
-                tagsDictionary.Add(Constants.ControllerTagKey, controllerName);
+                tagsDictionary.Add(ControllerTagKey, controllerName);
             }
             if (actionName != null)
             {
-                tagsDictionary.Add(Constants.ActionTagKey, actionName);
+                tagsDictionary.Add(ActionTagKey, actionName);
             }
-            tagsDictionary.Add(Constants.SourceTagKey, source ?? this.source);
+            if (source != null)
+            {
+                tagsDictionary.Add(SourceTagKey, source);
+            }
 
             return tagsDictionary.FromDictionary();
         }
