@@ -20,40 +20,9 @@ The steps to do so are as follows:
 The sections below detail each of the above steps.
 
 ### 1. Application Tags
-The application tags determine the metadata (aka point tags) that are included with the metrics and histograms reported to Wavefront.
+ApplicationTags determine the metadata (aka point tags) that are included with every metric/histogram reported to Wavefront.
 
-The following tags are mandatory:
-* `application`: The name of your ASP.NET Core application, for example: `OrderingApp`.
-* `service`: The name of the microservice within your application, for example: `inventory`.
-
-The following tags are optional:
-* `cluster`: For example: `us-west-2`.
-* `shard`: The shard (aka mirror), for example: `secondary`.
-
-You can also optionally add custom tags specific to your application in the form of an `IDictionary` (see example below).
-
-To create the application tags:
-
-```csharp
-string application = "OrderingApp";
-string service = "inventory";
-string cluster = "us-west-2";
-string shard = "secondary";
-
-var customTags = new Dictionary<string, string>
-{
-  { "location", "Oregon" },
-  { "env", "Staging" }
-};
-
-var applicationTags = new ApplicationTags.Builder(application, service)
-    .Cluster(cluster)       // optional
-    .Shard(shard)           // optional
-    .CustomTags(customTags) // optional
-    .Build();
-```
-
-You would typically define the above metadata in your application's configuration and create the `ApplicationTags`.
+See the [documentation](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/han/refactoring-and-aspnetcore-updates/docs/apptags.md) for details on instantiating ApplicationTags.
 
 ### 2. IWavefrontSender
 
@@ -89,7 +58,7 @@ var wfAspNetCoreReporter = builder.Build(wavefrontSender);
 Replace the source `mySource` with a relevant source name.
 
 ### 4. Register Wavefront services
-For your ASP.NET Core MVC application, add a call to `services.AddWavefrontForMvc` in `ConfigureServices` to enable HTTP request/response metrics and histograms for your controller actions. (This is implemented using an `IResourceFilter`, see the [ASP.NET Core Filters documentation](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/filters?view=aspnetcore-2.1#resource-filters) to learn how they work.)
+For your ASP.NET Core MVC application, add a call to `services.AddWavefrontForMvc` in `ConfigureServices` to enable HTTP request/response metrics and histograms for your controller actions. (This is implemented using an `IResourceFilter`, see the [ASP.NET Core documentation on filters](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/filters?view=aspnetcore-2.1#resource-filters) to learn how they work.)
 
 ```csharp
 public class Startup
@@ -109,69 +78,6 @@ public class Startup
 }
 ```
 
-## Metrics and Histograms provided by this SDK
-Let's consider a RESTful HTTP GET API that returns all the fulfilled orders with the controller action below:
+## Metrics and Histograms collected from your ASP.NET Core application
 
-```csharp
-[ApiController]
-public class InventoryController
-{
-    [Route("orders/fulfilled"]
-    [HttpGet]
-    public ActionResult<IEnumerable<Order>> GetAllFulfilledOrders() {
-       ...
-    }
-}
-
-```
-
-1) part of 'Ordering' application 
-2) running inside 'Inventory' microservice 
-3) deployed in 'us-west-1' cluster 
-4) serviced by 'primary' shard 
-5) on source = host-1 
-6) this API returns HTTP 200 status code
-
-When this API is invoked, the following entities (i.e. metrics and histograms) are reported directly from your application to Wavefront.
-
-### Request Gauges
-|Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
-| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
-|AspNetCore.request.inventory.orders.fulfilled.GET.inflight.value|Gauge|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
-|AspNetCore.total_requests.inflight.value|Gauge|host-1|Ordering|us-west-1|Inventory|primary|n/a|n/a|
-
-### Granular Response Metrics
-|Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
-| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.cumulative.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_shard.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_service.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|n/a|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_cluster.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|n/a|n/a|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_appliation.count|DeltaCounter|wavefront-provided|Ordering|n/a|n/a|n/a|Inventory|GetAllFulfilledOrders|
-
-### Granular Response Histograms
-|Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
-| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.latency|WavefrontHistogram|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
-
-### Completed Response Metrics
-This includes all the completed requests that returned a response (i.e. success + errors).
-
-|Entity Name| Entity Type|source|application|cluster|service|shard|
-| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|
-|AspNetCore.response.completed.aggregated_per_source.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|
-|AspNetCore.response.completed.aggregated_per_shard.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|Inventory|primary|
-|AspNetCore.response.completed.aggregated_per_service.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|Inventory|n/a|
-|AspNetCore.response.completed.aggregated_per_cluster.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|n/a|n/a|
-|AspNetCore.response.completed.aggregated_per_application.count|DeltaCounter|wavefont-provided|Ordering|n/a|n/a|n/a|
-
-### Error Response Metrics
-This includes all the completed requests that resulted in an error response (that is HTTP status code of 4xx or 5xx).
-
-|Entity Name| Entity Type|source|application|cluster|service|shard|
-| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|
-|AspNetCore.response.errors.aggregated_per_source.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|
-|AspNetCore.response.errors.aggregated_per_shard.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|Inventory|primary|
-|AspNetCore.response.errors.aggregated_per_service.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|Inventory|n/a|
-|AspNetCore.response.errors.aggregated_per_cluster.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|n/a|n/a|
-|AspNetCore.response.errors.aggregated_per_application.count|DeltaCounter|wavefont-provided|Ordering|n/a|n/a|n/a|
+See the [metrics documentation](https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp/blob/han/create-sdk/docs/metrics_mvc.md) for details on the out of the box metrics and histograms collected by this SDK and reported to Wavefront.

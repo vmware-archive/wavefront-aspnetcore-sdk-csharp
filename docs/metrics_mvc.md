@@ -1,0 +1,67 @@
+﻿# Metrics and Histograms provided for ASP.Net Core MVC
+Let's consider a RESTful HTTP GET API that returns all the fulfilled orders with the controller action below:
+
+```csharp
+[ApiController]
+public class InventoryController
+{
+    [Route("orders/fulfilled"]
+    [HttpGet]
+    public ActionResult<IEnumerable<Order>> GetAllFulfilledOrders() {
+       ...
+    }
+}
+
+```
+
+Assume this API is:
+1) part of 'Ordering' application 
+2) running inside 'Inventory' microservice 
+3) deployed in 'us-west-1' cluster 
+4) serviced by 'primary' shard 
+5) on source = host-1 
+6) this API returns HTTP 200 status code
+
+The following metrics and histograms are reported to Wavefront when this API is invoked:
+
+### Request Gauges
+|Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
+| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
+|AspNetCore.request.inventory.orders.fulfilled.GET.inflight.value|Gauge|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
+|AspNetCore.total_requests.inflight.value|Gauge|host-1|Ordering|us-west-1|Inventory|primary|n/a|n/a|
+
+### Granular Response Metrics
+|Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
+| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.cumulative.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_shard.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_service.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|n/a|Inventory|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_cluster.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|n/a|n/a|Inventory|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_appliation.count|DeltaCounter|wavefront-provided|Ordering|n/a|n/a|n/a|Inventory|GetAllFulfilledOrders|
+
+### Granular Response Histograms
+|Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
+| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.latency|WavefrontHistogram|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
+
+### Completed Response Metrics
+This includes all the completed requests that returned a response (i.e. success + errors).
+
+|Entity Name| Entity Type|source|application|cluster|service|shard|
+| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|
+|AspNetCore.response.completed.aggregated_per_source.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|
+|AspNetCore.response.completed.aggregated_per_shard.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|Inventory|primary|
+|AspNetCore.response.completed.aggregated_per_service.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|Inventory|n/a|
+|AspNetCore.response.completed.aggregated_per_cluster.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|n/a|n/a|
+|AspNetCore.response.completed.aggregated_per_application.count|DeltaCounter|wavefont-provided|Ordering|n/a|n/a|n/a|
+
+### Error Response Metrics
+This includes all the completed requests that resulted in an error response (that is HTTP status code of 4xx or 5xx).
+
+|Entity Name| Entity Type|source|application|cluster|service|shard|
+| ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|
+|AspNetCore.response.errors.aggregated_per_source.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|
+|AspNetCore.response.errors.aggregated_per_shard.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|Inventory|primary|
+|AspNetCore.response.errors.aggregated_per_service.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|Inventory|n/a|
+|AspNetCore.response.errors.aggregated_per_cluster.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|n/a|n/a|
+|AspNetCore.response.errors.aggregated_per_application.count|DeltaCounter|wavefont-provided|Ordering|n/a|n/a|n/a|
