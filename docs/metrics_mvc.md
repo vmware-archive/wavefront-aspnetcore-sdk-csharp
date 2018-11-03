@@ -24,13 +24,13 @@ Assume this API is:
 
 The following metrics and histograms are reported to Wavefront when this API is invoked:
 
-### Request Gauges
+## Request Gauges
 |Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
 | ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
 |AspNetCore.request.inventory.orders.fulfilled.GET.inflight.value|Gauge|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
 |AspNetCore.total_requests.inflight.value|Gauge|host-1|Ordering|us-west-1|Inventory|primary|n/a|n/a|
 
-### Granular Response Metrics
+## Granular Response Metrics
 |Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
 | ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
 |AspNetCore.response.inventory.orders.fulfilled.GET.200.cumulative.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
@@ -39,12 +39,12 @@ The following metrics and histograms are reported to Wavefront when this API is 
 |AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_cluster.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|n/a|n/a|Inventory|GetAllFulfilledOrders|
 |AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_appliation.count|DeltaCounter|wavefront-provided|Ordering|n/a|n/a|n/a|Inventory|GetAllFulfilledOrders|
 
-### Granular Response Histograms
+## Granular Response Histograms
 |Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
 | ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
 |AspNetCore.response.inventory.orders.fulfilled.GET.200.latency|WavefrontHistogram|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
 
-### Completed Response Metrics
+## Completed Response Metrics
 This includes all the completed requests that returned a response (i.e. success + errors).
 
 |Entity Name| Entity Type|source|application|cluster|service|shard|
@@ -55,7 +55,7 @@ This includes all the completed requests that returned a response (i.e. success 
 |AspNetCore.response.completed.aggregated_per_cluster.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|n/a|n/a|
 |AspNetCore.response.completed.aggregated_per_application.count|DeltaCounter|wavefont-provided|Ordering|n/a|n/a|n/a|
 
-### Error Response Metrics
+## Error Response Metrics
 This includes all the completed requests that resulted in an error response (that is HTTP status code of 4xx or 5xx).
 
 |Entity Name| Entity Type|source|application|cluster|service|shard|
