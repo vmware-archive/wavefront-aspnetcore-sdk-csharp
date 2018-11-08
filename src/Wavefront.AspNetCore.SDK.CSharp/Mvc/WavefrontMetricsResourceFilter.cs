@@ -7,10 +7,17 @@ using App.Metrics;
 using App.Metrics.Counter;
 using App.Metrics.Gauge;
 using App.Metrics.Histogram;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
+using OpenTracing;
+using OpenTracing.Noop;
+using OpenTracing.Propagation;
+using OpenTracing.Tag;
 using Wavefront.AspNetCore.SDK.CSharp.Common;
+using Wavefront.AspNetCore.SDK.CSharp.Tracing;
 using Wavefront.SDK.CSharp.Common.Application;
 using static Wavefront.AspNetCore.SDK.CSharp.Common.Constants;
 using static Wavefront.SDK.CSharp.Common.Constants;
@@ -18,14 +25,15 @@ using static Wavefront.SDK.CSharp.Common.Constants;
 namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
 {
     /// <summary>
-    ///     An <see cref="IResourceFilter"/> that generates Wavefront metrics and histograms for
-    ///     ASP.NET Core MVC requests/responses.
+    ///     An <see cref="IResourceFilter"/> that generates Wavefront metrics, histograms, and spans
+    ///     for ASP.NET Core MVC requests/responses.
     /// </summary>
     public class WavefrontMetricsResourceFilter : IResourceFilter
     {
         private readonly ILogger<WavefrontMetricsResourceFilter> logger;
         private readonly IMetrics metrics;
         private readonly ApplicationTags applicationTags;
+        private readonly ITracer tracer;   // Nullable 
 
         private readonly MetricTags overallAggregatedPerSourceTags;
         private readonly MetricTags overallAggregatedPerShardTags;
@@ -38,13 +46,20 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
         private readonly ConcurrentDictionary<WavefrontGaugeOptions, StrongBox<int>> gauges =
             new ConcurrentDictionary<WavefrontGaugeOptions, StrongBox<int>>();
 
+        private static readonly string ActiveSpanScopeKey =
+            "Wavefront.AspNetCore.SDK.CSharp.Mvc.Internal.ActiveSpanScope";
+        private static readonly string StartTimeMillisKey =
+            "Wavefront.AspNetCore.SDK.CSharp.Mvc.Internal.StartTimeMillis";
+
         public WavefrontMetricsResourceFilter(
             ILogger<WavefrontMetricsResourceFilter> logger,
-            WavefrontAspNetCoreReporter wfAspNetCoreReporter)
+            WavefrontAspNetCoreReporter wfAspNetCoreReporter,
+            ITracer tracer)
         {
             this.logger = logger;
             metrics = wfAspNetCoreReporter.Metrics;
             applicationTags = wfAspNetCoreReporter.ApplicationTags;
+            this.tracer = tracer;
 
             overallAggregatedPerSourceTags = GetTags(true, true, true, null, null, null);
             overallAggregatedPerShardTags =
@@ -73,11 +88,31 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             string actionName = controllerActionDescriptor.ActionName;
             string routeTemplate = controllerActionDescriptor.AttributeRouteInfo.Template;
             string requestMetricKey = MetricNameUtils.MetricName(request, routeTemplate);
-
-            context.HttpContext.Items["startTimeMillis"] = GetCurrentMillis();
-//          context.HttpContext.Items["startTimeNanos"] = GetCurrentNanos();
-
             var completeTags = GetTags(true, true, true, controllerName, actionName, null);
+
+            if (requestMetricKey == null)
+            {
+                return;
+            }
+
+            // Creat and start a tracing span
+            if (!(tracer is NoopTracer))
+            {
+                var spanBuilder = tracer.BuildSpan(actionName)
+                                        .WithTag(Tags.SpanKind.Key, Tags.SpanKindServer)
+                                        .WithTag(ControllerTagKey, controllerName)
+                                        .WithTag(PathTagKey, routeTemplate);
+                var parentSpanContext = ParentSpanContext(request);
+                if (parentSpanContext != null)
+                {
+                    spanBuilder.AsChildOf(parentSpanContext);
+                }
+                var scope = spanBuilder.StartActive(false);
+                DecorateRequest(request, scope.Span);
+                context.HttpContext.Items[ActiveSpanScopeKey] = scope;
+            }
+
+            context.HttpContext.Items[StartTimeMillisKey] = GetCurrentMillis();
 
             /* Gauges
              * 1) AspNetCore.request.api.v2.alert.summary.GET.inflight.value
@@ -104,8 +139,24 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             string routeTemplate = controllerActionDescriptor.AttributeRouteInfo.Template;
             string requestMetricKey = MetricNameUtils.MetricName(request, routeTemplate);
             string responseMetricKey = MetricNameUtils.MetricName(request, routeTemplate, response);
-
             var completeTags = GetTags(true, true, true, controllerName, actionName, null);
+
+            // Finish the tracing span
+            if (!(tracer is NoopTracer))
+            {
+                if (context.HttpContext.Items.TryGetValue(ActiveSpanScopeKey, out var scopeObject))
+                {
+                    var scope = (IScope)scopeObject; 
+                    DecorateResponse(response, scope.Span);
+                    scope.Dispose();
+                    scope.Span.Finish();
+                }
+            }
+
+            if (requestMetricKey == null || responseMetricKey == null)
+            {
+                return;
+            }
 
             /* 
              * Gauges
@@ -185,7 +236,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
              * 4) AspNetCore.response.errors.aggregated_per_cluster.count (DeltaCounter)
              * 5) AspNetCore.response.errors.aggregated_per_application.count (DeltaCounter)
              */
-            if (400 <= response.StatusCode && response.StatusCode < 600)
+            if (IsErrorStatusCode(response))
             {
                 metrics.Measure.Counter.Increment(new CounterOptions()
                 {
@@ -283,23 +334,16 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
              * WavefrontHistograms
              * 1) AspNetCore.response.api.v2.alert.summary.GET.200.latency
              */
-            long apiLatency =
-                GetCurrentMillis() - (long)context.HttpContext.Items["startTimeMillis"];
-            metrics.Measure.Histogram.Update(
-                new WavefrontHistogramOptions.Builder(responseMetricKey + ".latency")
-                                       .Context(AspNetCoreContext)
-                                       .Tags(completeTags)
-                                       .MeasurementUnit(MillisecondUnit)
-                                       .Build(), apiLatency);
-/*
-            long cpuNanos = GetCurrentNanos() - (long)context.HttpContext.Items["startTimeNanos"];
-            metrics.Measure.Histogram.Update(
-                new WavefrontHistogramOptions.Builder(responseMetricKey + ".cpu_ns")
-                                       .Context(AspNetCoreContext)
-                                       .Tags(completeTags)
-                                       .MeasurementUnit(NanosecondUnit)
-                                       .Build(), cpuNanos);
-*/
+            if (context.HttpContext.Items.TryGetValue(StartTimeMillisKey, out var startTimeMillis))
+            {
+                long apiLatency = GetCurrentMillis() - (long)startTimeMillis;
+                metrics.Measure.Histogram.Update(
+                    new WavefrontHistogramOptions.Builder(responseMetricKey + ".latency")
+                                           .Context(AspNetCoreContext)
+                                           .Tags(completeTags)
+                                           .MeasurementUnit(MillisecondUnit)
+                                           .Build(), apiLatency);
+            }
         }
 
         private StrongBox<int> GetGaugeValue(WavefrontGaugeOptions gaugeOptions)
@@ -350,11 +394,39 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
         {
             return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
-/*
-        private static long GetCurrentNanos()
+
+        private ISpanContext ParentSpanContext(HttpRequest request)
         {
-            return (1000000000L / Stopwatch.Frequency) * Stopwatch.GetTimestamp();
+            var activeSpan = tracer.ActiveSpan;
+            if (activeSpan != null)
+            {
+                return activeSpan.Context;
+            }
+            else {
+                return tracer.Extract(
+                    BuiltinFormats.HttpHeaders, new RequestHeadersExtractAdapter(request.Headers));
+            }
         }
-*/
+
+        private void DecorateRequest(HttpRequest request, ISpan span)
+        {
+            Tags.Component.Set(span, AspNetCoreComponent);
+            Tags.HttpMethod.Set(span, request.Method);
+            Tags.HttpUrl.Set(span, request.GetDisplayUrl());
+        }
+
+        private void DecorateResponse(HttpResponse response, ISpan span)
+        {
+            Tags.HttpStatus.Set(span, response.StatusCode);
+            if (IsErrorStatusCode(response))
+            {
+                Tags.Error.Set(span, true);
+            }
+        }
+
+        private bool IsErrorStatusCode(HttpResponse response)
+        {
+            return 400 <= response.StatusCode && response.StatusCode <= 599;
+        }
     }
 }

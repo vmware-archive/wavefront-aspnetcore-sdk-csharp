@@ -1,4 +1,4 @@
-﻿# Metrics and Histograms provided for ASP.Net Core MVC
+﻿# Metrics, Histograms, and Trace Spans provided for ASP.Net Core MVC
 Let's consider a RESTful HTTP GET API that returns all the fulfilled orders with the controller action below:
 
 ```csharp
@@ -65,3 +65,28 @@ This includes all the completed requests that resulted in an error response (tha
 |AspNetCore.response.errors.aggregated_per_service.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|Inventory|n/a|
 |AspNetCore.response.errors.aggregated_per_cluster.count|DeltaCounter|wavefont-provided|Ordering|us-west-1|n/a|n/a|
 |AspNetCore.response.errors.aggregated_per_application.count|DeltaCounter|wavefont-provided|Ordering|n/a|n/a|n/a|
+
+## Tracing Spans
+
+Every span will have the controller action name as span name and a start time and duration in milliseconds. Additionally the following attributes are included in the generated tracing spans:
+
+| Span Tag Key          | Span Tag Value                         |
+| --------------------- | -------------------------------------- |
+| traceId               | 4a3dc181-d4ac-44bc-848b-133bb3811c31   |
+| parent                | q908ddfe-4723-40a6-b1d3-1e85b60d9016   |
+| followsFrom           | b768ddfe-4723-40a6-b1d3-1e85b60d9016   |
+| spanId                | c908ddfe-4723-40a6-b1d3-1e85b60d9016   |
+| component             | AspNetCore                             |
+| span.kind             | server                                 |
+| application           | Ordering                               |
+| service               | Inventory                              |
+| cluster               | us-west-1                              |
+| shard                 | primary                                |
+| location              | Oregon (*custom tag)                   |
+| env                   | Staging (*custom tag)                  |
+| http.method           | GET                                    |
+| http.url              | http://{SERVER_ADDR}/orders/fulfilled  |
+| http.status_code      | 200                                    |
+| error                 | True                                   |
+| AspNetCore.path       | /orders/fulfilled                      |
+| AspNetCore.resource.controller | Inventory                     |

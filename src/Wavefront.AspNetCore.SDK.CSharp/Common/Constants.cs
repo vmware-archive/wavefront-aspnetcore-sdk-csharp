@@ -28,6 +28,11 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         public static readonly string ActionTagKey = AspNetCoreContext + ".resource.action";
 
         /// <summary>
+        ///     Tag key for defining the request path.
+        /// </summary>
+        public static readonly string PathTagKey = AspNetCoreContext + ".path";
+
+        /// <summary>
         ///     App Metrics measurement unit tag value for responses.
         /// </summary>
         public static readonly Unit ResponseUnit = Unit.Custom("resp");
@@ -36,11 +41,5 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         ///     App Metrics measurement unit tag value for milliseconds.
         /// </summary>
         public static readonly Unit MillisecondUnit = Unit.Custom("ms");
-/*
-        /// <summary>
-        ///     App Metrics measurement unit tag value for nanoseconds.
-        /// </summary>
-        public static readonly Unit NanosecondUnit = Unit.Custom("ns");
-*/
     }
 }

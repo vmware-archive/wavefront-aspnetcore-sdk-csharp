@@ -13,7 +13,10 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         /// <summary>
         ///     Util to generate metric name from the HTTP request and the route template.
         /// </summary>
-        /// <returns>The generated metric name.</returns>
+        /// <returns>
+        ///     The generated metric name, or null if all the original characters
+        ///     in the route template are not metric friendly.
+        /// </returns>
         /// <param name="request">The HTTP request object.</param>
         /// <param name="routeTemplate">The route template.</param>
         internal static string MetricName(HttpRequest request, string routeTemplate)
@@ -24,19 +27,24 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         /// <summary>
         ///     Util to generate metric name from the HTTP response and the route template.
         /// </summary>
-        /// <returns>The generated metric name.</returns>
+        /// <returns>
+        ///     The generated metric name, or null if all the original characters
+        ///     in the route template are not metric friendly.
+        /// </returns>
         /// <param name="request">The HTTP request object.</param>
         /// <param name="routeTemplate">The route template.</param>
         /// <param name="response">The HTTP response object.</param>
         internal static string MetricName(
             HttpRequest request, string routeTemplate, HttpResponse response)
         {
-            return $"{MetricName(request, routeTemplate, ResponsePrefix)}.{response.StatusCode}";
+            string metricName = MetricName(request, routeTemplate, ResponsePrefix);
+            return metricName == null ? null : $"{metricName}.{response.StatusCode}";
         }
 
         private static string MetricName(HttpRequest request, string routeTemplate, string prefix)
         {
-            return prefix + MetricName(request.Method, routeTemplate);
+            string metricName = MetricName(request.Method, routeTemplate);
+            return metricName == null ? null : prefix + metricName;
         }
 
         private static string MetricName(string httpMethod, string routeTemplate)
@@ -46,8 +54,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
                                .Replace(":", "")
                                .Replace("{", "_")
                                .Replace("}", "_");
-
-            return $"{metricId}.{httpMethod}";
+            return string.IsNullOrWhiteSpace(metricId) ? null : $"{metricId}.{httpMethod}";
         }
 
         private static string StripLeadingAndTrailingSlashes(string routeTemplate)

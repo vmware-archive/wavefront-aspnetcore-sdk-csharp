@@ -130,8 +130,8 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
                         })
                     .Build();
 
-                return new
-                    WavefrontAspNetCoreReporter(metrics, wavefrontSender, applicationTags, source);
+                return new WavefrontAspNetCoreReporter(
+                    metrics, wavefrontSender, applicationTags, source);
             }
         }
     }
