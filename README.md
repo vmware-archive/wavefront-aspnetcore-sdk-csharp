@@ -3,9 +3,9 @@
 This SDK collects out of the box metrics, histograms, and (optionally) traces from your ASP.NET Core application and reports the data to Wavefront. Data can be sent to Wavefront using either the [proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html). You can analyze the data in [Wavefront](https://www.wavefront.com) to better understand how your application is performing in production.
 
 ## Dependencies
-  * .NET Core (>= 2.1)
-  * Wavefront.AppMetrics.SDK.CSharp (>= 2.0.0) ([Github repo](https://github.com/wavefrontHQ/wavefront-appmetrics-sdk-csharp/tree/han/refactoring-and-aspnetcore-updates))
-  * Wavefront.OpenTracing.SDK.CSharp (>= 0.1.1) ([Github repo](https://github.com/wavefrontHQ/wavefront-opentracing-sdk-csharp/tree/han/refactoring-and-aspnetcore-updates))
+  * .NET Standard (>= 2.0)
+  * Wavefront.AppMetrics.SDK.CSharp (>= 2.1.0) ([NuGet](https://www.nuget.org/packages/Wavefront.AppMetrics.SDK.CSharp/))
+  * Wavefront.OpenTracing.SDK.CSharp (>= 1.2.0) ([NuGet](https://www.nuget.org/packages/Wavefront.OpenTracing.SDK.CSharp/))
   
 ## Configuration
 In order to collect HTTP request/response metrics and histograms for your application, you will need to register the Wavefront services that the SDK provides on application startup. This is done in the [`ConfigureServices` method](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-2.1#the-configureservices-method) of the `Startup` class.
@@ -23,15 +23,15 @@ The sections below detail each of the above steps.
 Application tags determine the metadata (span tags) that are included with every span reported to Wavefront. These tags enable you to filter and query trace data in Wavefront.
 
 You encapsulate application tags in an `ApplicationTags` object.
-See [Instantiating ApplicationTags](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/han/refactoring-and-aspnetcore-updates/docs/apptags.md) for details.
+See [Instantiating ApplicationTags](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/master/docs/apptags.md) for details.
 
 ### 2. Set Up an IWavefrontSender
 
 An `IWavefrontSender` object implements the low-level interface for sending data to Wavefront. You can choose to send data to Wavefront using either the [Wavefront proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html).
 
-* See [Set Up an IWavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/han/refactoring-and-aspnetcore-updates/README.md#set-up-an-iwavefrontsender) for details on instantiating a proxy or direct ingestion client.
+* See [Set Up an IWavefrontSender Instance](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/master/docs/sender.md) for details on instantiating a proxy or direct ingestion client.
 
-**Note:** If you are using multiple Wavefront C# SDKs, see [Sharing an IWavefrontSender](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/han/refactoring-and-aspnetcore-updates/docs/sender.md) for information about sharing a single `IWavefrontSender` instance across SDKs.
+**Note:** If you are using multiple Wavefront C# SDKs, see [Share an IWavefrontSender Instance](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/master/docs/sender.md#share-an-iwavefrontsender-instance) for information about sharing a single `IWavefrontSender` instance across SDKs.
 
 The `IWavefrontSender` is used by both the `WavefrontAspNetCoreReporter` and the optional `WavefrontTracer`.
 
@@ -66,7 +66,7 @@ You can optionally configure a `WavefrontTracer` to create and send trace data f
 
 To build a `WavefrontTracer`, you must specify:
 * The `ApplicationTags` object (see above).
-* A `WavefrontSpanReporter` for reporting trace data to Wavefront. See [Create a WavefrontSpanReporter](https://github.com/wavefrontHQ/wavefront-opentracing-sdk-csharp/blob/han/refactoring-and-aspnetcore-updates/README.md#create-a-wavefrontspanreporter) for details.
+* A `WavefrontSpanReporter` for reporting trace data to Wavefront. See [Create a WavefrontSpanReporter](https://github.com/wavefrontHQ/wavefront-opentracing-sdk-csharp#create-a-wavefrontspanreporter) for details.
   **Note:** When you create the `WavefrontSpanReporter`, you should instantiate it with the same source name and `IWavefrontSender` that you used to create the `WavefrontAspNetCoreReporter` (see above).
 
 ```csharp
@@ -100,7 +100,7 @@ public class Startup
 See the [metrics documentation](https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp/blob/han/create-sdk/docs/metrics_mvc.md) for details on the out of the box metrics and histograms collected by this SDK and reported to Wavefront.
 
 ## Cross Process Context Propagation
-See the [tracing documentation](https://github.com/wavefrontHQ/wavefront-opentracing-sdk-csharp/blob/han/refactoring-and-aspnetcore-updates/README.md#cross-process-context-propagation) for details on propagating span contexts across process boundaries.
+See the [context propagation documentation](https://github.com/wavefrontHQ/wavefront-opentracing-sdk-csharp/blob/master/docs/contextpropagation.md) for details on propagating span contexts across process boundaries.
 
 Alternatively, this SDK provides a custom `HttpClient` configuration that handles span context propagation for you. This is implemented as a [named client](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-2.1#named-clients). In order to make use of it, you will need to update your controllers to make HTTP requests using the named client:
 

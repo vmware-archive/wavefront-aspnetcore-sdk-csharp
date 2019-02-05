@@ -37,7 +37,9 @@ The following metrics and histograms are reported to Wavefront when this API is 
 |AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_shard.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
 |AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_service.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|n/a|Inventory|GetAllFulfilledOrders|
 |AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_cluster.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|n/a|n/a|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_appliation.count|DeltaCounter|wavefront-provided|Ordering|n/a|n/a|n/a|Inventory|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_application.count|DeltaCounter|wavefront-provided|Ordering|n/a|n/a|n/a|Inventory|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.total_time.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.errors.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
 
 ## Granular Response Histograms
 |Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
@@ -87,6 +89,6 @@ Every span will have the controller action name as span name and a start time an
 | http.method           | GET                                    |
 | http.url              | http://{SERVER_ADDR}/orders/fulfilled  |
 | http.status_code      | 200                                    |
-| error                 | True                                   |
+| error                 | true                                   |
 | AspNetCore.path       | /orders/fulfilled                      |
 | AspNetCore.resource.controller | Inventory                     |

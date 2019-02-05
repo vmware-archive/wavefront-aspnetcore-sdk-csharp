@@ -71,7 +71,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             overallAggregatedPerApplicationTags =
                 GetTags(false, false, false, null, null, WavefrontProvidedSource);
 
-            totalInflightRequestGauge = new WavefrontGaugeOptions()
+            totalInflightRequestGauge = new WavefrontGaugeOptions
             {
                 Context = AspNetCoreContext,
                 Name = "total_requests.inflight",
@@ -82,18 +82,13 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
 
         public void OnResourceExecuting(ResourceExecutingContext context)
         {
+            context.HttpContext.Items[StartTimeMillisKey] = GetCurrentMillis();
+
             var request = context.HttpContext.Request;
             var controllerActionDescriptor = context.ActionDescriptor as ControllerActionDescriptor;
             string controllerName = controllerActionDescriptor.ControllerName;
             string actionName = controllerActionDescriptor.ActionName;
             string routeTemplate = controllerActionDescriptor.AttributeRouteInfo.Template;
-            string requestMetricKey = MetricNameUtils.MetricName(request, routeTemplate);
-            var completeTags = GetTags(true, true, true, controllerName, actionName, null);
-
-            if (requestMetricKey == null)
-            {
-                return;
-            }
 
             // Creat and start a tracing span
             if (!(tracer is NoopTracer))
@@ -112,13 +107,18 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
                 context.HttpContext.Items[ActiveSpanScopeKey] = scope;
             }
 
-            context.HttpContext.Items[StartTimeMillisKey] = GetCurrentMillis();
+            string requestMetricKey = MetricNameUtils.MetricName(request, routeTemplate);
+            if (requestMetricKey == null)
+            {
+                return;
+            }
+            var completeTags = GetTags(true, true, true, controllerName, actionName, null);
 
             /* Gauges
              * 1) AspNetCore.request.api.v2.alert.summary.GET.inflight.value
              * 2) AspNetCore.total_requests.inflight.value
              */
-            var inflightRequestGauge = new WavefrontGaugeOptions()
+            var inflightRequestGauge = new WavefrontGaugeOptions
             {
                 Context = AspNetCoreContext,
                 Name = requestMetricKey + ".inflight",
@@ -137,33 +137,36 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             string controllerName = controllerActionDescriptor.ControllerName;
             string actionName = controllerActionDescriptor.ActionName;
             string routeTemplate = controllerActionDescriptor.AttributeRouteInfo.Template;
-            string requestMetricKey = MetricNameUtils.MetricName(request, routeTemplate);
-            string responseMetricKey = MetricNameUtils.MetricName(request, routeTemplate, response);
-            var completeTags = GetTags(true, true, true, controllerName, actionName, null);
+
 
             // Finish the tracing span
             if (!(tracer is NoopTracer))
             {
                 if (context.HttpContext.Items.TryGetValue(ActiveSpanScopeKey, out var scopeObject))
                 {
-                    var scope = (IScope)scopeObject; 
+                    var scope = (IScope)scopeObject;
                     DecorateResponse(response, scope.Span);
                     scope.Dispose();
                     scope.Span.Finish();
                 }
             }
 
-            if (requestMetricKey == null || responseMetricKey == null)
+            string requestMetricKey = MetricNameUtils.MetricName(request, routeTemplate);
+            string responseMetricKeyWithoutStatus =
+                MetricNameUtils.MetricName(request, routeTemplate, response);
+            if (requestMetricKey == null || responseMetricKeyWithoutStatus == null)
             {
                 return;
             }
+            string responseMetricKey = $"{responseMetricKeyWithoutStatus}.{response.StatusCode}";
+            var completeTags = GetTags(true, true, true, controllerName, actionName, null);
 
             /* 
              * Gauges
              * 1) AspNetCore.request.api.v2.alert.summary.GET.inflight.value
              * 2) AspNetCore.total_requests.inflight.value
              */
-            var inflightRequestGauge = new WavefrontGaugeOptions()
+            var inflightRequestGauge = new WavefrontGaugeOptions
             {
                 Context = AspNetCoreContext,
                 Name = requestMetricKey + ".inflight",
@@ -189,8 +192,9 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
              * 3) AspNetCore.response.api.v2.alert.summary.GET.200.aggregated_per_service.count (DeltaCounter)
              * 4) AspNetCore.response.api.v2.alert.summary.GET.200.aggregated_per_cluster.count (DeltaCounter)
              * 5) AspNetCore.response.api.v2.alert.summary.GET.200.aggregated_per_application.count (DeltaCounter)
+             * 6) AspNetCore.response.api.v2.alert.summary.GET.errors.count (Counter)
              */
-            metrics.Measure.Counter.Increment(new CounterOptions()
+            metrics.Measure.Counter.Increment(new CounterOptions
             {
                 Context = AspNetCoreContext,
                 Name = responseMetricKey + ".cumulative",
@@ -238,14 +242,21 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
              */
             if (IsErrorStatusCode(response))
             {
-                metrics.Measure.Counter.Increment(new CounterOptions()
+                metrics.Measure.Counter.Increment(new CounterOptions
+                {
+                    Context = AspNetCoreContext,
+                    Name = responseMetricKeyWithoutStatus + ".errors",
+                    Tags = completeTags,
+                    MeasurementUnit = Unit.Errors
+                });
+                metrics.Measure.Counter.Increment(new CounterOptions
                 {
                     Context = AspNetCoreContext,
                     Name = "response.errors",
                     Tags = completeTags,
                     MeasurementUnit = Unit.Errors
                 });
-                metrics.Measure.Counter.Increment(new CounterOptions()
+                metrics.Measure.Counter.Increment(new CounterOptions
                 {
                     Context = AspNetCoreContext,
                     Name = "response.errors.aggregated_per_source",
@@ -292,7 +303,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
              * 3) AspNetCore.response.completed.aggregated_per_cluster.count (DeltaCounter)
              * 5) AspNetCore.response.completed.aggregated_per_application.count (DeltaCounter)
              */
-            metrics.Measure.Counter.Increment(new CounterOptions()
+            metrics.Measure.Counter.Increment(new CounterOptions
             {
                 Context = AspNetCoreContext,
                 Name = "response.completed.aggregated_per_source",
@@ -330,12 +341,13 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
                                        .MeasurementUnit(ResponseUnit)
                                        .Build());
 
-            /*
-             * WavefrontHistograms
-             * 1) AspNetCore.response.api.v2.alert.summary.GET.200.latency
-             */
+
             if (context.HttpContext.Items.TryGetValue(StartTimeMillisKey, out var startTimeMillis))
             {
+                /*
+                 * WavefrontHistograms
+                 * 1) AspNetCore.response.api.v2.alert.summary.GET.200.latency
+                 */
                 long apiLatency = GetCurrentMillis() - (long)startTimeMillis;
                 metrics.Measure.Histogram.Update(
                     new WavefrontHistogramOptions.Builder(responseMetricKey + ".latency")
@@ -343,6 +355,18 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
                                            .Tags(completeTags)
                                            .MeasurementUnit(MillisecondUnit)
                                            .Build(), apiLatency);
+
+                /*
+                 * Total time spent counter
+                 *    AspNetCore.response.api.v2.alert.summary.GET.200.total_time
+                 */
+                metrics.Measure.Counter.Increment(new CounterOptions
+                {
+                    Context = AspNetCoreContext,
+                    Name = responseMetricKey + ".total_time",
+                    Tags = completeTags,
+                    MeasurementUnit = MillisecondUnit
+                }, apiLatency);
             }
         }
 
@@ -357,7 +381,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
         }
 
         private MetricTags GetTags(
-            bool includeCluster, bool includeService, bool includeShard, 
+            bool includeCluster, bool includeService, bool includeShard,
             string controllerName, string actionName, string source)
         {
             var tagsDictionary = new Dictionary<string, string>();
@@ -402,7 +426,8 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             {
                 return activeSpan.Context;
             }
-            else {
+            else
+            {
                 return tracer.Extract(
                     BuiltinFormats.HttpHeaders, new RequestHeadersExtractAdapter(request.Headers));
             }

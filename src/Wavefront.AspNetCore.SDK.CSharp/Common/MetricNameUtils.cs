@@ -37,8 +37,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         internal static string MetricName(
             HttpRequest request, string routeTemplate, HttpResponse response)
         {
-            string metricName = MetricName(request, routeTemplate, ResponsePrefix);
-            return metricName == null ? null : $"{metricName}.{response.StatusCode}";
+            return MetricName(request, routeTemplate, ResponsePrefix);
         }
 
         private static string MetricName(HttpRequest request, string routeTemplate, string prefix)
