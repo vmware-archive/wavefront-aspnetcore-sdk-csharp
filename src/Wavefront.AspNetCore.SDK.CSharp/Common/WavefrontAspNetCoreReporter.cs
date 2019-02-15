@@ -106,7 +106,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
             /// </param>
             public WavefrontAspNetCoreReporter Build(IWavefrontSender wavefrontSender)
             {
-                source = source ?? Dns.GetHostEntry("LocalHost").HostName;
+                source = string.IsNullOrWhiteSpace(source) ? Utils.GetDefaultSource() : source;
 
                 var globalTags = new Dictionary<string, string>(applicationTags.CustomTags)
                 {
