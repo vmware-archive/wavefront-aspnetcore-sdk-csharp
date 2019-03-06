@@ -13,7 +13,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp</RepositoryUrl>
     <PackageTags>Wavefront;VMware;monitoring;metrics;histogram;tracing;aspnetcore;aspnetcoremvc</PackageTags>
-	<PackageReleaseNotes>https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp/releases/tag/v1.0.0</PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp/releases/tag/v1.0.0</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="App.Metrics.AspNetCore" Version="2.0.0" />
