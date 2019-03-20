@@ -1,6 +1,21 @@
-# Wavefront ASP.NET Core SDK [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp)
+# Wavefront ASP.NET Core SDK [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp) [![NuGet](https://img.shields.io/nuget/v/Wavefront.AspNetCore.SDK.CSharp.svg)](https://www.nuget.org/packages/Wavefront.AspNetCore.SDK.CSharp)
 
 This SDK collects out of the box metrics, histograms, and (optionally) traces from your ASP.NET Core application and reports the data to Wavefront. Data can be sent to Wavefront using either the [proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html). You can analyze the data in [Wavefront](https://www.wavefront.com) to better understand how your application is performing in production.
+
+## Installation
+Install the [NuGet package](https://www.nuget.org/packages/Wavefront.AspNetCore.SDK.CSharp/).
+
+### Package Manager Console
+
+```
+PM> Install-Package Wavefront.AspNetCore.SDK.CSharp
+```
+
+### .NET CLI Console
+
+```
+> dotnet add package Wavefront.AspNetCore.SDK.CSharp
+```
 
 ## Configuration
 In order to collect HTTP request/response metrics and histograms for your application, you will need to register the Wavefront services that the SDK provides on application startup. This is done in the [`ConfigureServices` method](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-2.1#the-configureservices-method) of the `Startup` class.
