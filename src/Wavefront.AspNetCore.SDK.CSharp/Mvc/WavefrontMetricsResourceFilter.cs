@@ -144,7 +144,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
                 if (context.HttpContext.Items.TryGetValue(ActiveSpanScopeKey, out var scopeObject))
                 {
                     var scope = (IScope)scopeObject;
-                    DecorateResponse(response, scope.Span, context.Exception);
+                    DecorateResponse(response, scope.Span);
                     scope.Dispose();
                     scope.Span.Finish();
                 }
@@ -439,7 +439,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             Tags.HttpUrl.Set(span, request.GetDisplayUrl());
         }
 
-        private void DecorateResponse(HttpResponse response, ISpan span, Exception exception)
+        private void DecorateResponse(HttpResponse response, ISpan span)
         {
             Tags.HttpStatus.Set(span, response.StatusCode);
             if (IsErrorStatusCode(response))
