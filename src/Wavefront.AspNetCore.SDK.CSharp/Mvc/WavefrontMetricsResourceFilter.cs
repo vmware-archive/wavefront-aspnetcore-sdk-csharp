@@ -138,14 +138,13 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             string actionName = controllerActionDescriptor.ActionName;
             string routeTemplate = controllerActionDescriptor.AttributeRouteInfo.Template;
 
-
             // Finish the tracing span
             if (!(tracer is NoopTracer))
             {
                 if (context.HttpContext.Items.TryGetValue(ActiveSpanScopeKey, out var scopeObject))
                 {
                     var scope = (IScope)scopeObject;
-                    DecorateResponse(response, scope.Span);
+                    DecorateResponse(response, scope.Span, context.Exception);
                     scope.Dispose();
                     scope.Span.Finish();
                 }
@@ -440,12 +439,18 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             Tags.HttpUrl.Set(span, request.GetDisplayUrl());
         }
 
-        private void DecorateResponse(HttpResponse response, ISpan span)
+        private void DecorateResponse(HttpResponse response, ISpan span, Exception exception)
         {
             Tags.HttpStatus.Set(span, response.StatusCode);
             if (IsErrorStatusCode(response))
             {
                 Tags.Error.Set(span, true);
+                var fields = new Dictionary<string, object>
+                {
+                    { LogFields.Event, "error" },
+                    { "statusCode", response.StatusCode }
+                };
+                span.Log(fields);
             }
         }
 
