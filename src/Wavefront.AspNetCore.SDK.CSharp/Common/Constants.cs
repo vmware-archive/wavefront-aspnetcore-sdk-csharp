@@ -41,5 +41,11 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         ///     App Metrics measurement unit tag value for milliseconds.
         /// </summary>
         public static readonly Unit MillisecondUnit = Unit.Custom("ms");
+
+        /// <summary>
+        ///     Internal key for storing and accessing the unhandled exception of a particular request.
+        /// </summary>
+        public static readonly string ExceptionKey =
+            "Wavefront.AspNetCore.SDK.CSharp.Mvc.Internal.Exception";
     }
 }
