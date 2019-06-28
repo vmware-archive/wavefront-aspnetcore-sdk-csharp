@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using App.Metrics;
@@ -138,6 +139,11 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             string actionName = controllerActionDescriptor.ActionName;
             string routeTemplate = controllerActionDescriptor.AttributeRouteInfo.Template;
 
+            int statusCode = response.StatusCode;
+            if (context.HttpContext.Items.ContainsKey(ExceptionKey))
+            {
+                statusCode = (int)HttpStatusCode.InternalServerError;
+            }
 
             // Finish the tracing span
             if (!(tracer is NoopTracer))
@@ -145,7 +151,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
                 if (context.HttpContext.Items.TryGetValue(ActiveSpanScopeKey, out var scopeObject))
                 {
                     var scope = (IScope)scopeObject;
-                    DecorateResponse(response, scope.Span);
+                    DecorateResponse(scope.Span, statusCode);
                     scope.Dispose();
                     scope.Span.Finish();
                 }
@@ -158,7 +164,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             {
                 return;
             }
-            string responseMetricKey = $"{responseMetricKeyWithoutStatus}.{response.StatusCode}";
+            string responseMetricKey = $"{responseMetricKeyWithoutStatus}.{statusCode}";
             var completeTags = GetTags(true, true, true, controllerName, actionName, null);
 
             /* 
@@ -240,7 +246,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
              * 4) AspNetCore.response.errors.aggregated_per_cluster.count (DeltaCounter)
              * 5) AspNetCore.response.errors.aggregated_per_application.count (DeltaCounter)
              */
-            if (IsErrorStatusCode(response))
+            if (IsErrorStatusCode(statusCode))
             {
                 metrics.Measure.Counter.Increment(new CounterOptions
                 {
@@ -440,18 +446,18 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Mvc
             Tags.HttpUrl.Set(span, request.GetDisplayUrl());
         }
 
-        private void DecorateResponse(HttpResponse response, ISpan span)
+        private void DecorateResponse(ISpan span, int statusCode)
         {
-            Tags.HttpStatus.Set(span, response.StatusCode);
-            if (IsErrorStatusCode(response))
+            Tags.HttpStatus.Set(span, statusCode);
+            if (IsErrorStatusCode(statusCode))
             {
                 Tags.Error.Set(span, true);
             }
         }
 
-        private bool IsErrorStatusCode(HttpResponse response)
+        private bool IsErrorStatusCode(int statusCode)
         {
-            return 400 <= response.StatusCode && response.StatusCode <= 599;
+            return 400 <= statusCode && statusCode <= 599;
         }
     }
 }

@@ -50,9 +50,11 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
 
             // register MVC resource filter for capturing Wavefront metrics, histograms, and traces
             services.AddSingleton<WavefrontMetricsResourceFilter>();
+            services.AddSingleton<WavefrontMetricsExceptionFilter>();
             services.AddMvc(options =>
             {
                 options.Filters.AddService<WavefrontMetricsResourceFilter>();
+                options.Filters.AddService<WavefrontMetricsExceptionFilter>();
             });
 
             return services;
