@@ -1,4 +1,4 @@
-# Wavefront ASP.NET Core SDK [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp) [![NuGet](https://img.shields.io/nuget/v/Wavefront.AspNetCore.SDK.CSharp.svg)](https://www.nuget.org/packages/Wavefront.AspNetCore.SDK.CSharp)
+﻿# Wavefront ASP.NET Core SDK [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp) [![NuGet](https://img.shields.io/nuget/v/Wavefront.AspNetCore.SDK.CSharp.svg)](https://www.nuget.org/packages/Wavefront.AspNetCore.SDK.CSharp)
 
 This SDK collects out of the box metrics, histograms, and (optionally) traces from your ASP.NET Core application and reports the data to Wavefront. Data can be sent to Wavefront using either the [proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html). You can analyze the data in [Wavefront](https://www.wavefront.com) to better understand how your application is performing in production.
 
@@ -25,7 +25,7 @@ The steps to do so are as follows:
 2. Create an instance of `IWavefrontSender`: low-level interface that handles sending data to Wavefront.
 3. Create a `WavefrontAspNetCoreReporter` for reporting ASP.NET Core metrics and histograms to Wavefront.
 4. Optionally create a `WavefrontTracer` for reporting trace data to Wavefront.
-5. Register Wavefront services in `Startup`. For your ASP.NET Core MVC application, this is done by adding a call to `services.AddWavefrontForMvc` in `ConfigureServices`.
+5. Register Wavefront services in `Startup`. For your ASP.NET Core MVC application, this is done by adding a call to `services.AddWavefrontForMvc()` in `ConfigureServices`.
 
 The sections below detail each of the above steps.
 
@@ -86,55 +86,34 @@ ITracer tracer = new WavefrontTracer.Builder(wavefrontSpanReporter, applicationT
 ```
 
 ### 5. Register Wavefront services
-For your ASP.NET Core MVC application, add a call to `services.AddWavefrontForMvc` in `ConfigureServices` to enable HTTP request/response metrics and histograms for your controller actions. (This is implemented using an `IResourceFilter`, see the [ASP.NET Core documentation on filters](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/filters?view=aspnetcore-2.1#resource-filters) to learn more.)
+For your ASP.NET Core MVC application, add a call to `services.AddWavefrontForMvc()` in `ConfigureServices` to enable HTTP request/response metrics and histograms for your controller actions.
 
 ```csharp
 public class Startup
 {
-    ...
-    ...
     public void ConfigureServices(IServiceCollection services)
     {
-        ...
-        // Register Wavefront services for ASP.NET Core MVC using the wfAspNetCoreReporter
+        // Register Wavefront instrumentation services for ASP.NET Core MVC
         services.AddWavefrontForMvc(wfAspNetCoreReporter);
-        ...
     }
-    ...
-    ...
 }
 ```
+
+Alternatively, if you have optionally configured a `WavefrontTracer` to send trace data, make sure to pass it along as a parameter to ``services.AddWavefrontForMvc()`.
+
+```csharp
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        // Register Wavefront instrumentation services and tracing for ASP.NET Core MVC
+        services.AddWavefrontForMvc(wfAspNetCoreReporter, tracer);
+    }
+}
+```
+
+When registered, the `WavefrontTracer` generates server-side trace data for all incoming HTTP requests. It also generates client-side trace data and propagates trace information for all outgoing HTTP requests that use `HttpClientHandler`.
 
 ## Metrics, Histograms, and Trace Spans collected from your ASP.NET Core application
 
 See the [metrics documentation](https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp/blob/han/create-sdk/docs/metrics_mvc.md) for details on the out of the box metrics and histograms collected by this SDK and reported to Wavefront.
-
-## Cross Process Context Propagation
-See the [context propagation documentation](https://github.com/wavefrontHQ/wavefront-opentracing-sdk-csharp/blob/master/docs/contextpropagation.md) for details on propagating span contexts across process boundaries.
-
-Alternatively, this SDK provides a custom `HttpClient` configuration that handles span context propagation for you. This is implemented as a [named client](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-2.1#named-clients). In order to make use of it, you will need to update your controllers to make HTTP requests using the named client:
-
-```csharp
-[Route("api/values")]
-public class ValuesController
-{
-    private readonly IHttpClientFactory httpClientFactory;
-    
-    // Inject IHttpClientFactory into the controller's constructor
-    public ValuesController(IHttpClientFactory httpClientFactory)
-    {
-        this.httpClientFactory = httpClientFactory;
-    }
-    
-    [HttpGet]
-    public async Task<ActionResult> Get() {
-        // Use the IHttpClientFactory to build an instance of the span-context-propagation client
-        HttpClient client = httpClientFactory.CreateClient(NamedHttpClients.SpanContextPropagationClient);
-        
-        // Use the client to make HTTP requests. Span contexts will automatically be propagated across process boundaries
-        var result = await client.GetStringAsync("/");
-        
-        return Ok(result);
-    }
-}
-```

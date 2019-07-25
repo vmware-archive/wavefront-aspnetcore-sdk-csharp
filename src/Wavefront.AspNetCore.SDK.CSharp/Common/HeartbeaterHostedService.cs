@@ -12,11 +12,11 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
     /// </summary>
     public class HeartbeaterHostedService : IHostedService, IDisposable
     {
-        private readonly HeartbeaterService heartbeaterService;
+        private readonly HeartbeaterService _heartbeaterService;
 
         public HeartbeaterHostedService(WavefrontAspNetCoreReporter wfAspNetCoreReporter)
         {
-            heartbeaterService = new HeartbeaterService(
+            _heartbeaterService = new HeartbeaterService(
                 wfAspNetCoreReporter.WavefrontSender,
                 wfAspNetCoreReporter.ApplicationTags,
                 Constants.AspNetCoreComponent,
@@ -26,19 +26,19 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            heartbeaterService.Start();
+            _heartbeaterService.Start();
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            heartbeaterService.Stop();
+            _heartbeaterService.Stop();
             return Task.CompletedTask;
         }
 
         public void Dispose()
         {
-            heartbeaterService.Dispose();
+            _heartbeaterService.Dispose();
         }
     }
 }

@@ -13,6 +13,11 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         public static readonly string AspNetCoreComponent = "AspNetCore";
 
         /// <summary>
+        ///     Name of the ASP.NET Core component.
+        /// </summary>
+        public static readonly string HttpHandlerComponent = "AspNetCore-HttpOut";
+
+        /// <summary>
         ///     Name of the App Metrics context. 
         /// </summary>
         public static readonly string AspNetCoreContext = "AspNetCore";
@@ -43,9 +48,8 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         public static readonly Unit MillisecondUnit = Unit.Custom("ms");
 
         /// <summary>
-        ///     Internal key for storing and accessing the unhandled exception of a particular request.
+        ///     Name of the header for span operation name from server side.
         /// </summary>
-        public static readonly string ExceptionKey =
-            "Wavefront.AspNetCore.SDK.CSharp.Mvc.Internal.Exception";
+        public static readonly string WavefrontSpanHeader = "X-WF-SPAN-NAME";
     }
 }

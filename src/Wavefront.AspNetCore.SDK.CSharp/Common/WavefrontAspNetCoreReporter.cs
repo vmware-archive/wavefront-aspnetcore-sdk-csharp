@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using App.Metrics;
 using App.Metrics.Reporting.Wavefront.Builder;
 using Wavefront.SDK.CSharp.Common;
