@@ -2,16 +2,18 @@
 Let's consider a RESTful HTTP GET API that returns all the fulfilled orders with the controller action below:
 
 ```csharp
-[ApiController]
-public class InventoryController
+namespace Ordering.Inventory.Controllers
 {
-    [Route("orders/fulfilled"]
-    [HttpGet]
-    public ActionResult<IEnumerable<Order>> GetAllFulfilledOrders() {
-       ...
+    [ApiController]
+    public class InventoryController
+    {
+        [Route("orders/fulfilled"]
+        [HttpGet]
+        public ActionResult<IEnumerable<Order>> GetAllFulfilledOrders() {
+            ...
+        }
     }
 }
-
 ```
 
 Assume this API is:
@@ -27,24 +29,24 @@ The following metrics and histograms are reported to Wavefront when this API is 
 ## Request Gauges
 |Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
 | ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
-|AspNetCore.request.inventory.orders.fulfilled.GET.inflight.value|Gauge|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
+|AspNetCore.request.inventory.orders.fulfilled.GET.inflight.value|Gauge|host-1|Ordering|us-west-1|Inventory|primary|Ordering.Inventory.Controllers.InventoryController|GetAllFulfilledOrders|
 |AspNetCore.total_requests.inflight.value|Gauge|host-1|Ordering|us-west-1|Inventory|primary|n/a|n/a|
 
 ## Granular Response Metrics
 |Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
 | ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.cumulative.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_shard.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_service.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|n/a|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_cluster.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|n/a|n/a|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_application.count|DeltaCounter|wavefront-provided|Ordering|n/a|n/a|n/a|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.total_time.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
-|AspNetCore.response.inventory.orders.fulfilled.GET.errors.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.cumulative.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Ordering.Inventory.Controllers.InventoryController|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_shard.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|primary|Ordering.Inventory.Controllers.InventoryController|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_service.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|Inventory|n/a|Ordering.Inventory.Controllers.InventoryController|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_cluster.count|DeltaCounter|wavefront-provided|Ordering|us-west-1|n/a|n/a|Ordering.Inventory.Controllers.InventoryController|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.aggregated_per_application.count|DeltaCounter|wavefront-provided|Ordering|n/a|n/a|n/a|Ordering.Inventory.Controllers.InventoryController|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.total_time.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Ordering.Inventory.Controllers.InventoryController|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.errors.count|Counter|host-1|Ordering|us-west-1|Inventory|primary|Ordering.Inventory.Controllers.InventoryController|GetAllFulfilledOrders|
 
 ## Granular Response Histograms
 |Entity Name| Entity Type|source|application|cluster|service|shard|AspNetCore.resource.controller|AspNetCore.resource.action|
 | ------------- |:-------------:| -----:|-----:|-----:|-----:|-----:|-----:|-----:|
-|AspNetCore.response.inventory.orders.fulfilled.GET.200.latency|WavefrontHistogram|host-1|Ordering|us-west-1|Inventory|primary|Inventory|GetAllFulfilledOrders|
+|AspNetCore.response.inventory.orders.fulfilled.GET.200.latency|WavefrontHistogram|host-1|Ordering|us-west-1|Inventory|primary|Ordering.Inventory.Controllers.InventoryController|GetAllFulfilledOrders|
 
 ## Completed Response Metrics
 This includes all the completed requests that returned a response (i.e. success + errors).
@@ -70,7 +72,7 @@ This includes all the completed requests that resulted in an error response (tha
 
 ## Tracing Spans
 
-Every span will have the controller action name as span name and a start time and duration in milliseconds. Additionally the following attributes are included in the generated tracing spans:
+Every span will have the operation name as span name and a start time and duration in milliseconds. Additionally the following attributes are included in the generated tracing spans:
 
 | Span Tag Key          | Span Tag Value                         |
 | --------------------- | -------------------------------------- |
@@ -91,4 +93,4 @@ Every span will have the controller action name as span name and a start time an
 | http.status_code      | 200                                    |
 | error                 | true                                   |
 | AspNetCore.path       | /orders/fulfilled                      |
-| AspNetCore.resource.controller | Inventory                     |
+| AspNetCore.resource.controller | Ordering.Inventory.Controllers.InventoryController |
