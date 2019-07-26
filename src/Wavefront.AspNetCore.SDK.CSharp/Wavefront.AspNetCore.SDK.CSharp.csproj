@@ -17,10 +17,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="App.Metrics.AspNetCore" Version="2.0.0" />
-    <PackageReference Include="Wavefront.OpenTracing.SDK.CSharp" Version="1.5.0" />
+    <PackageReference Include="Wavefront.OpenTracing.SDK.CSharp" Version="1.5.1" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.1.0" />
-    <PackageReference Include="Wavefront.SDK.CSharp" Version="1.4.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Common\" />

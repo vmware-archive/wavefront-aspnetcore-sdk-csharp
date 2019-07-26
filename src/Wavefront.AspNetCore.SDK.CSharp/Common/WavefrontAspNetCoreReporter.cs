@@ -107,10 +107,20 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
             {
                 source = string.IsNullOrWhiteSpace(source) ? Utils.GetDefaultSource() : source;
 
-                var globalTags = new Dictionary<string, string>(applicationTags.CustomTags)
+                var globalTags = new Dictionary<string, string>
                 {
                     { ApplicationTagKey, applicationTags.Application }
                 };
+                if (applicationTags.CustomTags != null)
+                {
+                    foreach (var customTag in applicationTags.CustomTags)
+                    {
+                        if (!globalTags.ContainsKey(customTag.Key))
+                        {
+                            globalTags.Add(customTag.Key, customTag.Value);
+                        }
+                    }
+                }
 
                 var metrics = new MetricsBuilder()
                     .Configuration.Configure(
