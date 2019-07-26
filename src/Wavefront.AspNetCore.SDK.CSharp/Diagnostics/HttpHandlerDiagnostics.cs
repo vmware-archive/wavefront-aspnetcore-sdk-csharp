@@ -12,6 +12,7 @@ using OpenTracing.Propagation;
 using OpenTracing.Tag;
 using Wavefront.AspNetCore.SDK.CSharp.OpenTracing;
 using static Wavefront.AspNetCore.SDK.CSharp.Common.Constants;
+using static Wavefront.SDK.CSharp.Common.Constants;
 
 namespace Wavefront.AspNetCore.SDK.CSharp.Diagnostics
 {
@@ -132,7 +133,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Diagnostics
 
         private bool IgnoreRequest(HttpRequestMessage request)
         {
-            return request.Headers.Contains("X-WF-IGNORE"); // TODO: replace with defined constant
+            return request.Headers.Contains(WavefrontIgnoreHeader);
         }
     }
 }
