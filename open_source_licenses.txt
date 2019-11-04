@@ -1,6 +1,6 @@
 open_source_license.txt
 
-Wavefront by VMware ASP.Net Core SDK for C# 1.2.1 GA
+Wavefront by VMware ASP.Net Core SDK for C# 1.2.2 GA
 
 ======================================================================
 
@@ -706,4 +706,4 @@ Source Files is valid for three years from the date you acquired or last used th
 Software product. Alternatively, the Source Files may accompany the
 VMware service.
 
-[WAVEFRONTASPNETCORESDKCSHARP121GANT031319]
+[WAVEFRONTASPNETCORESDKCSHARP122GANT031319]
