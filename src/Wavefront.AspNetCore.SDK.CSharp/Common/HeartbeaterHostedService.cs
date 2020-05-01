@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Wavefront.SDK.CSharp.Common.Application;
 
 namespace Wavefront.AspNetCore.SDK.CSharp.Common
@@ -14,13 +16,15 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
     {
         private readonly HeartbeaterService _heartbeaterService;
 
-        public HeartbeaterHostedService(WavefrontAspNetCoreReporter wfAspNetCoreReporter)
+        public HeartbeaterHostedService(WavefrontAspNetCoreReporter wfAspNetCoreReporter,
+            ILoggerFactory loggerFactory)
         {
             _heartbeaterService = new HeartbeaterService(
                 wfAspNetCoreReporter.WavefrontSender,
                 wfAspNetCoreReporter.ApplicationTags,
-                Constants.AspNetCoreComponent,
-                wfAspNetCoreReporter.Source
+                new List<string> { Constants.AspNetCoreComponent },
+                wfAspNetCoreReporter.Source,
+                loggerFactory
             );
         }
 
