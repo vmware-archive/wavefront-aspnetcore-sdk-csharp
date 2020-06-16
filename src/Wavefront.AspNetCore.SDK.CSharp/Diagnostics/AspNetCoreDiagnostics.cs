@@ -123,6 +123,11 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Diagnostics
         private void OnHttpRequestInStart(object arg)
         {
             var httpContext = (HttpContext)_httpRequestIn_start_HttpContextFetcher.Fetch(arg);
+            if (httpContext == null)
+            {
+                Logger.LogInformation("No metrics/spans will be recorded because HttpContext payload is null");
+                return;
+            }
             var request = httpContext.Request;
 
             httpContext.Items[StartTimeMillisKey] = GetCurrentMillis();
@@ -150,8 +155,12 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Diagnostics
             //       has been selected but no filters have run and model binding hasn't occured.
 
             var httpContext = (HttpContext)_beforeAction_httpContextFetcher.Fetch(arg);
-            var request = httpContext.Request;
             var actionDescriptor = (ActionDescriptor)_beforeAction_ActionDescriptorFetcher.Fetch(arg);
+            if (httpContext == null || actionDescriptor == null)
+            {
+                return;
+            }
+            var request = httpContext.Request;
             string routeTemplate = actionDescriptor.AttributeRouteInfo.Template;
             var controllerActionDescriptor = actionDescriptor as ControllerActionDescriptor;
             string controllerName = controllerActionDescriptor?.ControllerTypeInfo.FullName;
@@ -205,9 +214,13 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Diagnostics
         private void OnAfterAction(object arg)
         {
             var httpContext = (HttpContext)_afterAction_httpContextFetcher.Fetch(arg);
+            var actionDescriptor = (ActionDescriptor)_afterAction_ActionDescriptorFetcher.Fetch(arg);
+            if (httpContext == null || actionDescriptor == null)
+            {
+                return;
+            }
             var request = httpContext.Request;
             var response = httpContext.Response;
-            var actionDescriptor = (ActionDescriptor)_afterAction_ActionDescriptorFetcher.Fetch(arg);
             string routeTemplate = actionDescriptor.AttributeRouteInfo.Template;
             var controllerActionDescriptor = actionDescriptor as ControllerActionDescriptor;
             string controllerName = controllerActionDescriptor?.ControllerTypeInfo.FullName;
@@ -262,6 +275,10 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Diagnostics
         private void OnHttpRequestInStop(object arg)
         {
             var httpContext = (HttpContext)_httpRequestIn_stop_HttpContextFetcher.Fetch(arg);
+            if (httpContext == null)
+            {
+                return;
+            }
             var statusCode = httpContext.Response.StatusCode;
 
             IScope scope = Tracer.ScopeManager.Active;

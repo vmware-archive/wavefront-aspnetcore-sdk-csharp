@@ -1,6 +1,7 @@
 ﻿// From https://github.com/opentracing-contrib/csharp-netcore/blob/master/src/OpenTracing.Contrib.NetCore/Internal/PropertyFetcher.cs
 
 using System;
+using System.Linq;
 using System.Reflection;
 
 namespace Wavefront.AspNetCore.SDK.CSharp.Diagnostics
@@ -28,7 +29,9 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Diagnostics
             if (objType != _expectedType)
             {
                 TypeInfo typeInfo = objType.GetTypeInfo();
-                _fetchForExpectedType = PropertyFetch.FetcherForProperty(typeInfo.GetDeclaredProperty(_propertyName));
+                var propertyInfo = typeInfo.DeclaredProperties.FirstOrDefault(
+                    p => string.Equals(p.Name, _propertyName, StringComparison.InvariantCultureIgnoreCase));
+                _fetchForExpectedType = PropertyFetch.FetcherForProperty(propertyInfo);
                 _expectedType = objType;
             }
             return _fetchForExpectedType.Fetch(obj);
