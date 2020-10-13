@@ -42,7 +42,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         /// <value>The source/host name.</value>
         public string Source { get; }
 
-        private WavefrontSdkMetricsRegistry sdkMetricsRegistry;
+        private readonly WavefrontSdkMetricsRegistry sdkMetricsRegistry;
 
         private WavefrontAspNetCoreReporter(IMetricsRoot metrics, IWavefrontSender wavefrontSender,
                                             ApplicationTags applicationTags, string source)
@@ -53,7 +53,7 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
             Source = source;
             sdkMetricsRegistry = new WavefrontSdkMetricsRegistry
                 .Builder(wavefrontSender)
-                .Prefix(SdkMetricPrefix + ".asp_net")
+                .Prefix(SdkMetricPrefix + ".aspnetcore")
                 .Source(source)
                 .Tags(applicationTags.ToPointTags())
                 .Build();
