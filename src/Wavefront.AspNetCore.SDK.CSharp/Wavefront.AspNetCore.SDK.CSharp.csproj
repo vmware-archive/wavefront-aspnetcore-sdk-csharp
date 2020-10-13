@@ -18,6 +18,8 @@
   <ItemGroup>
     <PackageReference Include="App.Metrics.AspNetCore" Version="2.0.0" />
     <PackageReference Include="Wavefront.OpenTracing.SDK.CSharp" Version="2.0.0" />
+    <!-- Remove this once OpenTracing SDK version has been updated. -->
+    <PackageReference Include="Wavefront.SDK.CSharp" Version="1.6.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.1.0" />
   </ItemGroup>
