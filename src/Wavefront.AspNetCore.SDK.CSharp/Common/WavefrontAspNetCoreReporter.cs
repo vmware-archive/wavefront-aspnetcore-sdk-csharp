@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using App.Metrics;
 using App.Metrics.Reporting.Wavefront.Builder;
 using Wavefront.SDK.CSharp.Common;
 using Wavefront.SDK.CSharp.Common.Application;
+using Wavefront.SDK.CSharp.Common.Metrics;
 using static Wavefront.AspNetCore.SDK.CSharp.Common.Constants;
 using static Wavefront.SDK.CSharp.Common.Constants;
 
@@ -40,6 +42,8 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
         /// <value>The source/host name.</value>
         public string Source { get; }
 
+        private WavefrontSdkMetricsRegistry sdkMetricsRegistry;
+
         private WavefrontAspNetCoreReporter(IMetricsRoot metrics, IWavefrontSender wavefrontSender,
                                             ApplicationTags applicationTags, string source)
         {
@@ -47,6 +51,14 @@ namespace Wavefront.AspNetCore.SDK.CSharp.Common
             WavefrontSender = wavefrontSender;
             ApplicationTags = applicationTags;
             Source = source;
+            sdkMetricsRegistry = new WavefrontSdkMetricsRegistry
+                .Builder(wavefrontSender)
+                .Prefix(SdkMetricPrefix + ".asp_net")
+                .Source(source)
+                .Tags(applicationTags.ToPointTags())
+                .Build();
+            double sdkVersion = Utils.GetSemVer(Assembly.GetExecutingAssembly());
+            sdkMetricsRegistry.Gauge("version", () => sdkVersion);
         }
 
         public class Builder
