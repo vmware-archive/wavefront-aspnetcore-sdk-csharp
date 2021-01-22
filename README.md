@@ -33,15 +33,15 @@ The sections below detail each of the above steps.
 Application tags determine the metadata (span tags) that are included with every span reported to Wavefront. These tags enable you to filter and query trace data in Wavefront.
 
 You encapsulate application tags in an `ApplicationTags` object.
-See [Instantiating ApplicationTags](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/master/docs/apptags.md) for details.
+See [Instantiating ApplicationTags](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/csharp/applicationtags.md#application-tags) for details.
 
 ### 2. Set Up an IWavefrontSender
 
 An `IWavefrontSender` object implements the low-level interface for sending data to Wavefront. You can choose to send data to Wavefront using either the [Wavefront proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html).
 
-* See [Set Up an IWavefrontSender Instance](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/master/docs/sender.md) for details on instantiating a proxy or direct ingestion client.
+* See [Set Up an IWavefrontSender Instance](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/csharp/wavefrontsender.md#set-up-an-iwavefrontsender-instance) for details on instantiating a proxy or direct ingestion client.
 
-**Note:** If you are using multiple Wavefront C# SDKs, see [Share an IWavefrontSender Instance](https://github.com/wavefrontHQ/wavefront-sdk-csharp/blob/master/docs/sender.md#share-an-iwavefrontsender-instance) for information about sharing a single `IWavefrontSender` instance across SDKs.
+**Note:** If you are using multiple Wavefront C# SDKs, see [Share an IWavefrontSender Instance](https://github.com/wavefrontHQ/wavefront-sdk-doc-sources/blob/master/csharp/wavefrontsender.md#share-an-iwavefrontsender-instance) for information about sharing a single `IWavefrontSender` instance across SDKs.
 
 The `IWavefrontSender` is used by both the `WavefrontAspNetCoreReporter` and the optional `WavefrontTracer`.
 
@@ -116,4 +116,4 @@ When registered, the `WavefrontTracer` generates server-side trace data for all 
 
 ## Metrics, Histograms, and Trace Spans collected from your ASP.NET Core application
 
-See the [metrics documentation](https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp/blob/han/create-sdk/docs/metrics_mvc.md) for details on the out of the box metrics and histograms collected by this SDK and reported to Wavefront.
+See the [metrics documentation](https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp/blob/master/docs/metrics_mvc.md#metrics-histograms-and-trace-spans-provided-for-aspnet-core-mvc) for details on the out of the box metrics and histograms collected by this SDK and reported to Wavefront.
