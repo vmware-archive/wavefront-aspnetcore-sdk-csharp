@@ -2,9 +2,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <NoWarn>NU1701</NoWarn>
     <PackageId>Wavefront.AspNetCore.SDK.CSharp</PackageId>
-    <Version>1.4.0</Version>
+    <Version>1.5.0-beta</Version>
     <Title>Wavefront by VMware ASP.NET Core SDK</Title>
     <Authors>Wavefront</Authors>
     <Description>This library provides support for reporting out of the box metrics, histograms, and tracing spans from your ASP.NET Core Web API or MVC application. The data is reported to Wavefront via proxy or direct ingestion and will help you understand how your application is performing in production.</Description>
@@ -13,13 +12,11 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp</RepositoryUrl>
     <PackageTags>Wavefront;VMware;monitoring;metrics;histogram;tracing;aspnetcore;aspnetcoremvc</PackageTags>
-    <PackageReleaseNotes>https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp/releases/tag/v1.4.0</PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp/releases/tag/v1.5.0-beta</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="App.Metrics.AspNetCore" Version="2.0.0" />
-    <PackageReference Include="Wavefront.OpenTracing.SDK.CSharp" Version="2.0.0" />
-    <!-- Remove this once OpenTracing SDK version has been updated. -->
-    <PackageReference Include="Wavefront.SDK.CSharp" Version="1.6.0" />
+    <PackageReference Include="Wavefront.OpenTracing.SDK.CSharp" Version="2.2.0-beta" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.1.0" />
   </ItemGroup>
