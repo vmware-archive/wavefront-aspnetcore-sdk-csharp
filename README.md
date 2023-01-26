@@ -1,4 +1,8 @@
-﻿# Wavefront ASP.NET Core SDK [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp) [![NuGet](https://img.shields.io/nuget/v/Wavefront.AspNetCore.SDK.CSharp.svg)](https://www.nuget.org/packages/Wavefront.AspNetCore.SDK.CSharp)
+```
+VMware has ended active development of this project, this repository will no longer be updated.
+```
+
+# Wavefront ASP.NET Core SDK [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-aspnetcore-sdk-csharp) [![NuGet](https://img.shields.io/nuget/v/Wavefront.AspNetCore.SDK.CSharp.svg)](https://www.nuget.org/packages/Wavefront.AspNetCore.SDK.CSharp)
 
 This SDK collects out of the box metrics, histograms, and (optionally) traces from your ASP.NET Core application and reports the data to Wavefront. Data can be sent to Wavefront using either the [proxy](https://docs.wavefront.com/proxies.html) or [direct ingestion](https://docs.wavefront.com/direct_ingestion.html). You can analyze the data in [Wavefront](https://www.wavefront.com) to better understand how your application is performing in production.
 
